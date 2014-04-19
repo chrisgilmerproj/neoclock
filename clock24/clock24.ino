@@ -31,15 +31,43 @@ const uint8_t gamma[] = {
 //   NEO_GRB     Pixels are wired for GRB bitstream
 //   NEO_KHZ400  400 KHz bitstream (e.g. FLORA pixels)
 //   NEO_KHZ800  800 KHz bitstream (e.g. High Density LED strip)
-uint8_t pixels = 24;
+int inner_offset = 24;
+int inner_pixels = 24;
+int outer_pixels = 60;
+int pixels = inner_pixels + outer_pixels;
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, PIN, NEO_GRB + NEO_KHZ800);
 
+//Set number of hours, should be 12 or 24
+int num_hours = 12;
+
+//Set the top pixel for each ring
+int inner_top_led = 0 % inner_pixels;
+int outer_top_led = 0 % outer_pixels;
+
+//RGB
 uint32_t milli_color  = strip.Color ( 42,  0,  0); // was (10, 0, 0)
 uint32_t second_color = strip.Color (  0,  0, 42); // was (0, 0, 10)
 uint32_t minute_color = strip.Color (  0, 42,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
 uint32_t off_color    = strip.Color (  0,  0,  0);
 
+//tequila sunrise color scheme
+/*
+uint32_t milli_color  = strip.Color ( 44, 21, 0); // redest orange
+uint32_t second_color = strip.Color ( 44, 30, 0); //slightly yellower
+uint32_t hour_color   = strip.Color ( 44, 42, 0); //yellow
+uint32_t minute_color = strip.Color ( 43,  0, 5); //red
+uint32_t off_color    = strip.Color (  0,  0, 0);
+*/
+
+//blue, green, & purple color scheme
+/*
+uint32_t milli_color  = strip.Color ( 24,  0, 24); // magenta
+uint32_t second_color = strip.Color ( 17,  0, 44); // purple
+uint32_t hour_color   = strip.Color (  0, 10, 44); // royal blue
+uint32_t minute_color = strip.Color (  0, 44, 10); // green
+uint32_t off_color    = strip.Color (  0,  0,  0);
+*/
 
 /* TODO 0.0 to 1.0 percent between current and next value. for color fading */
 /* or event based lerping? */
@@ -70,10 +98,20 @@ ClockPositions::ClockPositions()
 
 void ClockPositions::update()
 {
-  second = map ((millis() % 60000), 0, 60000, 0, (pixels-1));
-  milli  = map ((millis() %  1000), 0,  1000, 0, pixels);
-  hour   = map (10 % 24, 0,  12, 0, pixels);
-  minute = map (31 % 60, 0,  60, 0, pixels);
+  // Inner Loop
+  second = inner_top_led + map ((millis() % 60000), 0, 60000, 0, (inner_pixels-1));
+  if (second > inner_pixels) { second = second - inner_pixels; };
+  //milli  = map ((millis() %  1000), 0,  1000, 0, pixels);
+  //if (mllli > inner_pixels) { milli = milli - inner_pixels; };
+  
+  // Outer Loop
+  int currenthour = 0;
+  hour   = outer_top_led + map (currenthour % num_hours, 0,  num_hours, 0, outer_pixels);
+  if (hour > pixels) { hour = hour - outer_pixels; };
+  
+  int currentminute = 30;
+  minute = outer_top_led + map (currentminute % 60, 0,  60, 0, outer_pixels);
+  if (minute > pixels) { minute = minute - outer_pixels;};
 }
 
 
@@ -103,19 +141,17 @@ void ClockSegments::draw()
 {
   clear();
 
-  add_color (positions.hour       % pixels, hour_color);
+  add_color (inner_offset + positions.hour       % outer_pixels, hour_color);
+  //add_color (inner_offset + (positions.hour+1)   % outer_pixels, hour_color);
   
-  add_color (positions.minute     % pixels, minute_color);
-  add_color ((positions.minute+1) % pixels, minute_color);
+  add_color (inner_offset + positions.minute     % outer_pixels, minute_color);
+  //add_color (inner_offset + (positions.minute+1) % outer_pixels, minute_color);
 
-  add_color (positions.second     % pixels, second_color);
-  add_color ((positions.second+1) % pixels, second_color);
-  add_color ((positions.second+2) % pixels, second_color);
+  add_color (positions.second     % inner_pixels, second_color);
+  //add_color ((positions.second+1) % inner_pixels, second_color);
 
-  add_color (positions.milli      % pixels, milli_color);
-  add_color ((positions.milli+1)  % pixels, milli_color);
-  add_color ((positions.milli+2)  % pixels, milli_color);
-  add_color ((positions.milli+3)  % pixels, milli_color);
+  // add_color (positions.milli      % inner_pixels, milli_color);
+  // add_color ((positions.milli+1)  % inner_pixels, milli_color);
 
   strip.show ();
 }
@@ -178,10 +214,10 @@ void setup ()
   strip.show (); // Initialize all pixels to 'off'
   
   // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(255, 0, 0), 50); // Red
-  colorWipe(strip.Color(0, 255, 0), 50); // Green
-  colorWipe(strip.Color(0, 0, 255), 50); // Blue
-  rainbowCycle(20);
+  //colorWipe(strip.Color(255, 0, 0), 50); // Red
+  //colorWipe(strip.Color(0, 255, 0), 50); // Green
+  //colorWipe(strip.Color(0, 0, 255), 50); // Blue
+  rainbowMultiCycle(10);
 }
 
 
@@ -208,6 +244,24 @@ void rainbowCycle(uint8_t wait) {
   for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
     for(i=0; i< strip.numPixels(); i++) {
       strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+    }
+    strip.show();
+    delay(wait);
+  }
+}
+
+// Slightly different, this makes the rainbow equally distributed throughout
+// across two rings
+void rainbowMultiCycle(uint8_t wait) {
+  uint16_t i, j, k;
+
+  int num_cycles = 1;
+  for(k=0; k<256*num_cycles; k++) { // cycles of all colors on wheel
+    for(i=0; i< inner_pixels; i++) {
+      strip.setPixelColor(i, Wheel(((i * 256 / inner_pixels) + k) & 255));
+    }
+    for(j=0; j< outer_pixels; j++) {
+      strip.setPixelColor(inner_pixels + j, Wheel(((j * 256 / outer_pixels) + k) & 255));
     }
     strip.show();
     delay(wait);
