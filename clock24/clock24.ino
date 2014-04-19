@@ -41,23 +41,24 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, PIN, NEO_GRB + NEO_KHZ800);
 int num_hours = 12;
 
 //Set the top pixel for each ring
-int inner_top_led = 0 % inner_pixels;
-int outer_top_led = 0 % outer_pixels;
+int inner_top_led = 15 % inner_pixels;
+int outer_top_led = 35 % outer_pixels;
+
+// Off Color
+uint32_t off_color    = strip.Color (  0,  0,  0);
 
 //RGB
 uint32_t milli_color  = strip.Color ( 42,  0,  0); // was (10, 0, 0)
 uint32_t second_color = strip.Color (  0,  0, 42); // was (0, 0, 10)
 uint32_t minute_color = strip.Color (  0, 42,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
-uint32_t off_color    = strip.Color (  0,  0,  0);
 
 //tequila sunrise color scheme
 /*
 uint32_t milli_color  = strip.Color ( 44, 21, 0); // redest orange
-uint32_t second_color = strip.Color ( 44, 30, 0); //slightly yellower
-uint32_t hour_color   = strip.Color ( 44, 42, 0); //yellow
-uint32_t minute_color = strip.Color ( 43,  0, 5); //red
-uint32_t off_color    = strip.Color (  0,  0, 0);
+uint32_t second_color = strip.Color ( 44, 30, 0); // slightly yellower
+uint32_t hour_color   = strip.Color ( 44, 42, 0); // yellow
+uint32_t minute_color = strip.Color ( 43,  0, 5); // red
 */
 
 //blue, green, & purple color scheme
@@ -66,24 +67,21 @@ uint32_t milli_color  = strip.Color ( 24,  0, 24); // magenta
 uint32_t second_color = strip.Color ( 17,  0, 44); // purple
 uint32_t hour_color   = strip.Color (  0, 10, 44); // royal blue
 uint32_t minute_color = strip.Color (  0, 44, 10); // green
-uint32_t off_color    = strip.Color (  0,  0,  0);
 */
 
-/* TODO 0.0 to 1.0 percent between current and next value. for color fading */
-/* or event based lerping? */
-
-/* TODO gamut values from goggles */
-/* TODO smooth sub pixel rendering of bar/pixel ends (careful to avoid 50% average brightness in middle for a pixel */
-
+// Keep the current time
+int current_second = 0;
+int current_minute = 0;
+int current_hour = 0;
 
 /* CLOCK */
 class ClockPositions
 {
  public:
-  uint8_t milli;
-  uint8_t second;
-  uint8_t minute;
-  uint8_t hour;
+  uint8_t px_milli;
+  uint8_t px_second;
+  uint8_t px_minute;
+  uint8_t px_hour;
 
   ClockPositions ();
   void update    ();
@@ -92,28 +90,31 @@ class ClockPositions
 
 ClockPositions::ClockPositions()
 {
-  milli = second = minute = hour = 0;
-  //DateTime(__DATE__, __TIME__);
+  px_milli = px_second = px_minute = px_hour = 0;
 }
 
 void ClockPositions::update()
 {
-  // Inner Loop
-  second = inner_top_led + map ((millis() % 60000), 0, 60000, 0, (inner_pixels-1));
-  if (second > inner_pixels) { second = second - inner_pixels; };
-  //milli  = map ((millis() %  1000), 0,  1000, 0, pixels);
-  //if (mllli > inner_pixels) { milli = milli - inner_pixels; };
-  
-  // Outer Loop
-  int currenthour = 0;
-  hour   = outer_top_led + map (currenthour % num_hours, 0,  num_hours, 0, outer_pixels);
-  if (hour > pixels) { hour = hour - outer_pixels; };
-  
-  int currentminute = 30;
-  minute = outer_top_led + map (currentminute % 60, 0,  60, 0, outer_pixels);
-  if (minute > pixels) { minute = minute - outer_pixels;};
-}
+  // Get Time
+  time_t t = now();
+  current_second = second(t);
+  current_minute = minute(t);
+  current_hour = hour(t);
 
+  // Inner Loop
+  px_hour   = inner_top_led + map (current_hour % num_hours, 0,  num_hours, 0, inner_pixels);
+  if (px_hour > pixels) { px_hour = px_hour - inner_pixels; };
+  
+  //px_milli  = map ((millis() %  1000), 0,  1000, 0, pixels);
+  //if (px_mllli > inner_pixels) { px_milli = px_milli - inner_pixels; };
+
+  // Outer Loop
+  px_second = outer_top_led + map (current_second % 60, 0, 60, 0, outer_pixels);
+  if (px_second > outer_pixels) { px_second = px_second - outer_pixels; };
+  
+  px_minute = outer_top_led + map (current_minute % 60, 0, 60, 0, outer_pixels);
+  if (px_minute > pixels) { px_minute = px_minute - outer_pixels;};
+}
 
 
 /* CLOCK VIEW */
@@ -141,17 +142,14 @@ void ClockSegments::draw()
 {
   clear();
 
-  add_color (inner_offset + positions.hour       % outer_pixels, hour_color);
-  //add_color (inner_offset + (positions.hour+1)   % outer_pixels, hour_color);
+  add_color ((positions.px_hour+0)              % inner_pixels, hour_color);
+  add_color ((positions.px_hour+1)              % inner_pixels, hour_color);
   
-  add_color (inner_offset + positions.minute     % outer_pixels, minute_color);
-  //add_color (inner_offset + (positions.minute+1) % outer_pixels, minute_color);
+  add_color (inner_offset + positions.px_minute % outer_pixels, minute_color);
 
-  add_color (positions.second     % inner_pixels, second_color);
-  //add_color ((positions.second+1) % inner_pixels, second_color);
+  add_color (inner_offset + positions.px_second % outer_pixels, second_color);
 
-  // add_color (positions.milli      % inner_pixels, milli_color);
-  // add_color ((positions.milli+1)  % inner_pixels, milli_color);
+  // add_color (positions.px_milli      % inner_pixels, milli_color);
 
   strip.show ();
 }
@@ -186,8 +184,9 @@ uint32_t ClockSegments::blend (uint32_t color1, uint32_t color2)
   g2 = (uint8_t)(color2 >>  8),
   b2 = (uint8_t)(color2 >>  0);
 
-
-  return strip.Color (constrain (r1+r2, 0, 255), constrain (g1+g2, 0, 255), constrain (b1+b2, 0, 255));
+  return strip.Color (constrain (r1+r2, 0, 255),
+                      constrain (g1+g2, 0, 255),
+                      constrain (b1+b2, 0, 255));
 }
 
 
@@ -197,7 +196,6 @@ void ClockSegments::clear ()
       strip.setPixelColor (i, off_color);
   }
 }
-
 
 
 /* SIMPLE MIXER */
@@ -217,7 +215,7 @@ void setup ()
   //colorWipe(strip.Color(255, 0, 0), 50); // Red
   //colorWipe(strip.Color(0, 255, 0), 50); // Green
   //colorWipe(strip.Color(0, 0, 255), 50); // Blue
-  rainbowMultiCycle(10);
+  //rainbowMultiCycle(10);
 }
 
 
