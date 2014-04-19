@@ -103,14 +103,14 @@ void ClockPositions::update()
 
   // Inner Loop
   px_hour   = inner_top_led + map (current_hour % num_hours, 0,  num_hours, 0, inner_pixels);
-  if (px_hour > pixels) { px_hour = px_hour - inner_pixels; };
-  
-  //px_milli  = map ((millis() %  1000), 0,  1000, 0, pixels);
-  //if (px_mllli > inner_pixels) { px_milli = px_milli - inner_pixels; };
+  if (px_hour > inner_pixels) { px_hour = px_hour - inner_pixels; };
 
   // Outer Loop
+  px_milli  = map ((millis() %  1000), 0,  1000, 0, outer_pixels);
+  if (px_milli > outer_pixels) { px_milli = px_milli - outer_pixels; };
+
   px_second = outer_top_led + map (current_second % 60, 0, 60, 0, outer_pixels);
-  if (px_second > outer_pixels) { px_second = px_second - outer_pixels; };
+  if (px_second > pixels) { px_second = px_second - outer_pixels; };
   
   px_minute = outer_top_led + map (current_minute % 60, 0, 60, 0, outer_pixels);
   if (px_minute > pixels) { px_minute = px_minute - outer_pixels;};
@@ -149,7 +149,7 @@ void ClockSegments::draw()
 
   add_color (inner_offset + positions.px_second % outer_pixels, second_color);
 
-  // add_color (positions.px_milli      % inner_pixels, milli_color);
+  add_color (inner_offset + positions.px_milli  % outer_pixels, milli_color);
 
   strip.show ();
 }
