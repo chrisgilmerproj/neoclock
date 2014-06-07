@@ -2,7 +2,26 @@
 #include <Adafruit_NeoPixel.h>
 #include <Time.h>  
 
-#define PIN 6
+#define SET_CLOCK_PIN 2
+#define SET_TIME_PIN 3
+#define RING_PIN 6
+#define LED_PIN 13
+
+// Clock Setting
+int clock_state;
+int last_clock_state = LOW;
+int time_state;
+int last_time_state = LOW;
+
+int clock_time_state = 0; // 0 - Run Clock
+                          // 1 - Set Hour
+                          // 2 - Set Minute
+
+int led_state = LOW;
+
+long last_clock_debounce_time = 0;
+long last_time_debounce_time = 0;
+long debounce_delay = 50; // milliseconds
 
 // From adaFruit NEOPIXEL goggles example: Gamma correction improves appearance of midrange colors
 const uint8_t gamma[] = {
@@ -35,7 +54,7 @@ int inner_offset = 24;
 int inner_pixels = 24;
 int outer_pixels = 60;
 int pixels = inner_pixels + outer_pixels;
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, RING_PIN, NEO_GRB + NEO_KHZ800);
 
 //Set number of hours, should be 12 or 24
 int num_hours = 12;
@@ -48,26 +67,10 @@ int outer_top_led = 35 % outer_pixels;
 uint32_t off_color    = strip.Color (  0,  0,  0);
 
 //RGB
-uint32_t milli_color  = strip.Color ( 42,  0,  0); // was (10, 0, 0)
-uint32_t second_color = strip.Color (  0,  0, 42); // was (0, 0, 10)
-uint32_t minute_color = strip.Color (  0, 42,  0); // was (15,10,10)
+uint32_t milli_color  = strip.Color (  0,  0, 42); // was (10, 0, 0)
+uint32_t second_color = strip.Color (  0, 42,  0); // was (0, 0, 10)
+uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
-
-//tequila sunrise color scheme
-/*
-uint32_t milli_color  = strip.Color ( 44, 21, 0); // redest orange
-uint32_t second_color = strip.Color ( 44, 30, 0); // slightly yellower
-uint32_t hour_color   = strip.Color ( 44, 42, 0); // yellow
-uint32_t minute_color = strip.Color ( 43,  0, 5); // red
-*/
-
-//blue, green, & purple color scheme
-/*
-uint32_t milli_color  = strip.Color ( 24,  0, 24); // magenta
-uint32_t second_color = strip.Color ( 17,  0, 44); // purple
-uint32_t hour_color   = strip.Color (  0, 10, 44); // royal blue
-uint32_t minute_color = strip.Color (  0, 44, 10); // green
-*/
 
 // Keep the current time
 int current_second = 0;
@@ -102,12 +105,14 @@ void ClockPositions::update()
   current_hour = hour(t);
 
   // Inner Loop
+  // If px is greater than inner pixels must subtract inner pixels
   px_hour   = inner_top_led + map (current_hour % num_hours, 0,  num_hours, 0, inner_pixels);
   if (px_hour > inner_pixels) { px_hour = px_hour - inner_pixels; };
 
   // Outer Loop
-  px_milli  = map ((millis() %  1000), 0,  1000, 0, outer_pixels);
-  if (px_milli > outer_pixels) { px_milli = px_milli - outer_pixels; };
+  // If px is greater than total pixels must subtract outer pixels
+  px_milli  = outer_top_led + map ((millis() %  1000), 0,  1000, 0, outer_pixels);
+  if (px_milli > pixels) { px_milli = px_milli - outer_pixels; };
 
   px_second = outer_top_led + map (current_second % 60, 0, 60, 0, outer_pixels);
   if (px_second > pixels) { px_second = px_second - outer_pixels; };
@@ -208,6 +213,12 @@ ClockSegments  segments(strip, positions);
 
 void setup ()
 {
+  pinMode(SET_CLOCK_PIN, INPUT);
+  pinMode(SET_TIME_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  
+  digitalWrite(LED_PIN, led_state);
+  
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
   
@@ -221,8 +232,66 @@ void setup ()
 
 void loop ()
 {
-  positions.update ();
-  segments.draw ();
+  // Enable setting the clock
+  int clock_reading = digitalRead(SET_CLOCK_PIN);
+  if (clock_reading != last_clock_state) {
+    last_clock_debounce_time = millis();
+  }
+  if ((millis() - last_clock_debounce_time) > debounce_delay) {
+    if (clock_reading != clock_state) {
+      clock_state = clock_reading;
+      
+      if (clock_state == HIGH) {
+        led_state = !led_state;
+        if (clock_time_state == 0) {
+          clock_time_state == 1;
+        } 
+        else if (clock_time_state == 1) {
+          clock_time_state == 2;
+        }
+        else if (clock_time_state == 2) {
+          clock_time_state == 0;
+        }
+      }
+    }
+  }
+  digitalWrite(LED_PIN, led_state);
+  last_clock_state = clock_reading;
+  
+  // Set the hours or minutes
+  if (clock_time_state != 0) {
+    int time_reading = digitalRead(SET_TIME_PIN);
+    if (time_reading != last_time_state) {
+      last_time_debounce_time = millis();
+    }
+    if ((millis() - last_time_debounce_time) > debounce_delay) {
+      if (time_reading != time_state) {
+        time_state = time_reading;
+        
+        if (time_state == HIGH) {
+          // Get Time
+          time_t t = now();
+          current_second = second(t);
+          current_minute = minute(t);
+          current_hour = hour(t);
+          
+          if (clock_time_state == 1) {
+            // Update Hours
+          }
+          else if (clock_time_state == 2) {
+            // Update minutes
+          }
+        }
+      }
+    }
+    last_time_state = time_reading;
+  } 
+  else {
+    // Update positions (ie run the clock)
+    positions.update();
+  }
+  // Draw the clock
+  segments.draw();
 }
 
 
