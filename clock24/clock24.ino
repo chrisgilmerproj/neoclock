@@ -63,8 +63,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, RING_PIN, NEO_GRB + NEO_KHZ8
 int num_hours = 12;
 
 //Set the top pixel for each ring
-int inner_top_led = 15 % inner_pixels;
-int outer_top_led = 35 % outer_pixels;
+int inner_top_led = 17 % inner_pixels;
+int outer_top_led = 42 % outer_pixels;
 
 // Off Color
 uint32_t off_color    = strip.Color (  0,  0,  0);
@@ -74,6 +74,7 @@ uint32_t milli_color  = strip.Color (  0,  0, 42); // was (10, 0, 0)
 uint32_t second_color = strip.Color (  0, 42,  0); // was (0, 0, 10)
 uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
+uint8_t current_brightness = 0;
 
 // Keep the current time
 int current_second = 0;
@@ -119,6 +120,12 @@ void ClockPositions::update()
   
   px_minute = outer_top_led + map (current_minute % 60, 0, 60, 0, outer_pixels);
   if (px_minute > pixels) { px_minute = px_minute - outer_pixels;};
+
+  // Fade up to full brightness
+  if (current_brightness < 256) {
+    current_brightness += 1;
+    strip.setBrightness(current_brightness);
+  }
 }
 
 
@@ -287,6 +294,12 @@ void loop ()
 
   // Update positions
   positions.update();
+
+  // Top of hour animation
+  if ((current_minute == 0) && (current_second == 0)) {
+    rainbowMultiCycle(10, 1);
+  }
+
   // Draw the clock
   segments.draw();
 }
@@ -302,24 +315,10 @@ void colorWipe(uint32_t c, uint32_t wait) {
 }
 
 // Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
 // across two rings
-void rainbowMultiCycle(uint8_t wait) {
+void rainbowMultiCycle(uint8_t wait, uint8_t num_cycles) {
   uint16_t i, j, k;
 
-  int num_cycles = 1;
   for(k=0; k<256*num_cycles; k++) { // cycles of all colors on wheel
     for(i=0; i< inner_pixels; i++) {
       strip.setPixelColor(i, Wheel(((i * 256 / inner_pixels) + k) & 255));
@@ -327,6 +326,8 @@ void rainbowMultiCycle(uint8_t wait) {
     for(j=0; j< outer_pixels; j++) {
       strip.setPixelColor(inner_pixels + j, Wheel(((j * 256 / outer_pixels) + k) & 255));
     }
+    current_brightness = 256 - (k % 256);
+    strip.setBrightness(current_brightness);
     strip.show();
     delay(wait);
   }
