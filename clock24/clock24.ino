@@ -15,11 +15,12 @@ int time_state;
 int last_time_state = LOW;
 
 // Track Clock Set States
-int num_states = 4;       // Number of clock states:
+int num_states = 5;       // Number of clock states:
 int clock_time_state = 0; // 0 - Run Clock
                           // 1 - Set Hour
                           // 2 - Set Minute
                           // 3 - Set Second
+                          // 4 - Set Colors
 
 // Debounce buttons
 long last_clock_debounce_time = 0;
@@ -70,6 +71,7 @@ int outer_top_led = 42 % outer_pixels;
 uint32_t off_color    = strip.Color (  0,  0,  0);
 
 //RGB
+int current_clock_color = 0;
 uint32_t milli_color  = strip.Color (  0,  0, 42); // was (10, 0, 0)
 uint32_t second_color = strip.Color (  0, 42,  0); // was (0, 0, 10)
 uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
@@ -121,8 +123,8 @@ void ClockPositions::update()
   px_minute = outer_top_led + map (current_minute % 60, 0, 60, 0, outer_pixels);
   if (px_minute > pixels) { px_minute = px_minute - outer_pixels;};
 
-  // Fade up to full brightness
-  if (current_brightness < 256) {
+  // Fade up to full brightness (above 255 causes roll over)
+  if (current_brightness < 255) {
     current_brightness += 1;
     strip.setBrightness(current_brightness);
   }
@@ -231,7 +233,6 @@ void setup ()
   //colorWipe(strip.Color(255, 0, 0), 50); // Red
   //colorWipe(strip.Color(0, 255, 0), 50); // Green
   //colorWipe(strip.Color(0, 0, 255), 50); // Blue
-  //rainbowMultiCycle(10);
 }
 
 
@@ -276,6 +277,30 @@ void loop ()
           else if (clock_time_state == 3) {
             // Update seconds
             current_second = (current_second + 1) % 60;
+          }
+          else if (clock_time_state == 4) {
+            current_clock_color = (current_clock_color + 1) % 3;
+            if (current_clock_color == 0) {
+              // primary colors
+              milli_color  = strip.Color (  0,  0, 42); // blue
+              second_color = strip.Color (  0, 42,  0); // green
+              minute_color = strip.Color ( 42,  0,  0); // red
+              hour_color   = strip.Color ( 42, 42, 42); // white
+            }
+            else if (current_clock_color == 1) {
+              //blue, green, & purple
+              milli_color  = strip.Color ( 24,  0, 24); // magenta
+              second_color = strip.Color ( 17,  0, 44); // purple
+              hour_color   = strip.Color (  0, 10, 44); // royal blue
+              minute_color = strip.Color (  0, 44, 10); // green
+            }
+            else if (current_clock_color == 2) {
+              //tequila sunrise color scheme
+              milli_color  = strip.Color ( 44, 21,  0); // redest orange
+              second_color = strip.Color ( 44, 30,  0); // slightly yellower
+              hour_color   = strip.Color ( 44, 42,  0); // yellow
+              minute_color = strip.Color ( 43,  0,  5); // red
+            }
           }
         }
       }
@@ -326,7 +351,7 @@ void rainbowMultiCycle(uint8_t wait, uint8_t num_cycles) {
     for(j=0; j< outer_pixels; j++) {
       strip.setPixelColor(inner_pixels + j, Wheel(((j * 256 / outer_pixels) + k) & 255));
     }
-    current_brightness = 256 - (k % 256);
+    current_brightness = 255 - (k % 256);
     strip.setBrightness(current_brightness);
     strip.show();
     delay(wait);
