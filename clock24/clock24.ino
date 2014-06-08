@@ -76,7 +76,6 @@ uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
 
 // Keep the current time
-int current_milli = 0;
 int current_second = 0;
 int current_minute = 0;
 int current_hour = 0;
@@ -109,8 +108,11 @@ void ClockPositions::update()
 
   // Outer Loop
   // If px is greater than total pixels must subtract outer pixels
-  px_milli  = outer_top_led + map ((current_milli %  1000), 0,  1000, 0, outer_pixels);
-  if (px_milli > pixels) { px_milli = px_milli - outer_pixels; };
+  // Update the milliseconds only if clock isn't being set
+  if (clock_time_state == 0) {
+    px_milli  = outer_top_led + map ((millis() %  1000), 0,  1000, 0, outer_pixels);
+    if (px_milli > pixels) { px_milli = px_milli - outer_pixels; };
+  }
 
   px_second = outer_top_led + map (current_second % 60, 0, 60, 0, outer_pixels);
   if (px_second > pixels) { px_second = px_second - outer_pixels; };
@@ -278,7 +280,6 @@ void loop ()
   else {
     // Get Time only if not in setting mode
     time_t t = now();
-    current_milli = millis();
     current_second = second(t);
     current_minute = minute(t);
     current_hour = hour(t);
