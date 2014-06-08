@@ -72,11 +72,8 @@ uint32_t off_color    = strip.Color (  0,  0,  0);
 
 //RGB
 int current_clock_color = 0;
-uint32_t milli_color  = strip.Color (  0,  0, 42); // was (10, 0, 0)
-uint32_t second_color = strip.Color (  0, 42,  0); // was (0, 0, 10)
-uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
-uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
 uint8_t current_brightness = 0;
+uint32_t milli_color, second_color, minute_color, hour_color;
 
 // Keep the current time
 int current_second = 0;
@@ -211,10 +208,73 @@ void ClockSegments::clear ()
   }
 }
 
+/* Color Palettes */
+// Use https://kuler.adobe.com/create/color-wheel
+// Analagous color scheme with some spread
+// Multiply all values by 0.17 to reduce brightness
 
-/* SIMPLE MIXER */
-// add rgb and clamp
+void setColorPrimary ()
+{
+  // primary colors
+  milli_color  = strip.Color (  0,  0, 42); // blue
+  second_color = strip.Color (  0, 42,  0); // green
+  minute_color = strip.Color ( 42,  0,  0); // red
+  hour_color   = strip.Color ( 42, 42, 42); // white
+}
 
+void setColorRoyal ()
+{
+  //blue, green, & purple
+  milli_color  = strip.Color ( 24,  0, 24); // magenta
+  second_color = strip.Color ( 17,  0, 44); // purple
+  hour_color   = strip.Color (  0, 10, 44); // royal blue
+  minute_color = strip.Color (  0, 44, 10); // green
+}
+
+void setColorTequila ()
+{
+  //tequila sunrise color scheme
+  milli_color  = strip.Color ( 44, 21,  0); // redest orange
+  second_color = strip.Color ( 44, 30,  0); // slightly yellower
+  hour_color   = strip.Color ( 44, 42,  0); // yellow
+  minute_color = strip.Color ( 43,  0,  5); // red
+}
+
+void setColorRed ()
+{
+  // 255,0,0 center on red
+  milli_color  = strip.Color ( 43, 22,  0); // orange
+  second_color = strip.Color ( 39, 10,  0); // red orange
+  hour_color   = strip.Color ( 39,  0, 35); // pink
+  minute_color = strip.Color ( 24,  0, 43); // purple
+}
+
+void setColorOrange ()
+{
+  // 255,128,0 center on orange
+  milli_color  = strip.Color ( 38, 34,  0); // yellow
+  second_color = strip.Color ( 34, 24,  0); // orange
+  hour_color   = strip.Color ( 34,  8,  0); // red orange
+  minute_color = strip.Color ( 38,  0,  3); // red
+}
+
+void setColorCyan ()
+{
+  // 0,255,255 center on cyan
+  milli_color  = strip.Color (  0,  2, 43); // bluew
+  second_color = strip.Color (  0, 20, 39); // orange
+  hour_color   = strip.Color (  0, 39, 19); // red orange
+  minute_color = strip.Color (  1, 43,  0); // red
+}
+
+void setColorBlue ()
+{
+  // 0,0,255 center on blue
+  milli_color  = strip.Color ( 36,  1, 38); // pink
+  second_color = strip.Color ( 17,  1, 34); // purple blue
+  hour_color   = strip.Color (  1, 16, 34); // other blue
+  minute_color = strip.Color (  0, 34, 38); // light blue
+}
 
 /* APP */
 ClockPositions positions;
@@ -226,13 +286,9 @@ void setup ()
   pinMode(SET_CLOCK_PIN, INPUT);
   pinMode(SET_TIME_PIN, INPUT);
   
+  setColorBlue();
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
-  
-  // Some example procedures showing how to display to the pixels:
-  //colorWipe(strip.Color(255, 0, 0), 50); // Red
-  //colorWipe(strip.Color(0, 255, 0), 50); // Green
-  //colorWipe(strip.Color(0, 0, 255), 50); // Blue
 }
 
 
@@ -279,27 +335,18 @@ void loop ()
             current_second = (current_second + 1) % 60;
           }
           else if (clock_time_state == 4) {
-            current_clock_color = (current_clock_color + 1) % 3;
+            current_clock_color = (current_clock_color + 1) % 4;
             if (current_clock_color == 0) {
-              // primary colors
-              milli_color  = strip.Color (  0,  0, 42); // blue
-              second_color = strip.Color (  0, 42,  0); // green
-              minute_color = strip.Color ( 42,  0,  0); // red
-              hour_color   = strip.Color ( 42, 42, 42); // white
+              setColorBlue();
             }
             else if (current_clock_color == 1) {
-              //blue, green, & purple
-              milli_color  = strip.Color ( 24,  0, 24); // magenta
-              second_color = strip.Color ( 17,  0, 44); // purple
-              hour_color   = strip.Color (  0, 10, 44); // royal blue
-              minute_color = strip.Color (  0, 44, 10); // green
+              setColorRed();
             }
             else if (current_clock_color == 2) {
-              //tequila sunrise color scheme
-              milli_color  = strip.Color ( 44, 21,  0); // redest orange
-              second_color = strip.Color ( 44, 30,  0); // slightly yellower
-              hour_color   = strip.Color ( 44, 42,  0); // yellow
-              minute_color = strip.Color ( 43,  0,  5); // red
+              setColorCyan();
+            }
+            else if (current_clock_color == 3) {
+              setColorOrange();
             }
           }
         }
@@ -320,9 +367,18 @@ void loop ()
   // Update positions
   positions.update();
 
-  // Top of hour animation
+  // Animations for 4 clock quarters
   if ((current_minute == 0) && (current_second == 0)) {
-    rainbowMultiCycle(10, 1);
+    rainbowMultiCycle(10);
+  }
+  else if ((current_minute == 15) && (current_second == 0)) {
+    colorWipe(strip.Color(255, 0, 0), 25); // Red
+  }
+  else if ((current_minute == 30) && (current_second == 0)) {
+    colorWipe(strip.Color(0, 255, 0), 25); // Green
+  }
+  else if ((current_minute == 45) && (current_second == 0)) {
+    colorWipe(strip.Color(0, 0, 255), 25); // Blue
   }
 
   // Draw the clock
@@ -332,29 +388,47 @@ void loop ()
 
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint32_t wait) {
-  for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, c);
-      strip.show();
-      delay(wait);
+  fadeOut();
+
+  int num_pixels = strip.numPixels();
+  for(uint16_t i=0; i<num_pixels; i++) {
+    strip.setPixelColor(i, c);
+    current_brightness += 255 / num_pixels;
+    strip.setBrightness(current_brightness);
+    strip.show();
+    delay(wait);
   }
+  fadeOut();
 }
 
 // Slightly different, this makes the rainbow equally distributed throughout
 // across two rings
-void rainbowMultiCycle(uint8_t wait, uint8_t num_cycles) {
+void rainbowMultiCycle(uint8_t wait) {
   uint16_t i, j, k;
+  fadeOut();
 
-  for(k=0; k<256*num_cycles; k++) { // cycles of all colors on wheel
+  for(k=0; k<256; k++) { // cycles of all colors on wheel
     for(i=0; i< inner_pixels; i++) {
       strip.setPixelColor(i, Wheel(((i * 256 / inner_pixels) + k) & 255));
     }
     for(j=0; j< outer_pixels; j++) {
       strip.setPixelColor(inner_pixels + j, Wheel(((j * 256 / outer_pixels) + k) & 255));
     }
-    current_brightness = 255 - (k % 256);
+    current_brightness = k;
     strip.setBrightness(current_brightness);
     strip.show();
     delay(wait);
+  }
+  fadeOut();
+}
+
+void fadeOut()
+{
+  while (current_brightness != 0) {
+    current_brightness -= 1;
+    strip.setBrightness(current_brightness);
+    strip.show();
+    delay(1);
   }
 }
 
