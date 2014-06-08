@@ -5,20 +5,23 @@
 #define SET_CLOCK_PIN 2
 #define SET_TIME_PIN 3
 #define RING_PIN 6
-#define LED_PIN 13
 
-// Clock Setting
+// Set Clock Button
 int clock_state;
 int last_clock_state = LOW;
+
+// Set Time Button
 int time_state;
 int last_time_state = LOW;
 
+// Track Clock Set States
+int num_states = 4;       // Number of clock states:
 int clock_time_state = 0; // 0 - Run Clock
                           // 1 - Set Hour
                           // 2 - Set Minute
+                          // 3 - Set Second
 
-int led_state = LOW;
-
+// Debounce buttons
 long last_clock_debounce_time = 0;
 long last_time_debounce_time = 0;
 long debounce_delay = 50; // milliseconds
@@ -73,6 +76,7 @@ uint32_t minute_color = strip.Color ( 42,  0,  0); // was (15,10,10)
 uint32_t hour_color   = strip.Color ( 42, 42, 42); // was (0, 10, 0)
 
 // Keep the current time
+int current_milli = 0;
 int current_second = 0;
 int current_minute = 0;
 int current_hour = 0;
@@ -98,12 +102,6 @@ ClockPositions::ClockPositions()
 
 void ClockPositions::update()
 {
-  // Get Time
-  time_t t = now();
-  current_second = second(t);
-  current_minute = minute(t);
-  current_hour = hour(t);
-
   // Inner Loop
   // If px is greater than inner pixels must subtract inner pixels
   px_hour   = inner_top_led + map (current_hour % num_hours, 0,  num_hours, 0, inner_pixels);
@@ -111,7 +109,7 @@ void ClockPositions::update()
 
   // Outer Loop
   // If px is greater than total pixels must subtract outer pixels
-  px_milli  = outer_top_led + map ((millis() %  1000), 0,  1000, 0, outer_pixels);
+  px_milli  = outer_top_led + map ((current_milli %  1000), 0,  1000, 0, outer_pixels);
   if (px_milli > pixels) { px_milli = px_milli - outer_pixels; };
 
   px_second = outer_top_led + map (current_second % 60, 0, 60, 0, outer_pixels);
@@ -213,11 +211,9 @@ ClockSegments  segments(strip, positions);
 
 void setup ()
 {
+  // Initialize Buttons
   pinMode(SET_CLOCK_PIN, INPUT);
   pinMode(SET_TIME_PIN, INPUT);
-  pinMode(LED_PIN, OUTPUT);
-  
-  digitalWrite(LED_PIN, led_state);
   
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
@@ -232,7 +228,7 @@ void setup ()
 
 void loop ()
 {
-  // Enable setting the clock
+  // Change the clock settings state
   int clock_reading = digitalRead(SET_CLOCK_PIN);
   if (clock_reading != last_clock_state) {
     last_clock_debounce_time = millis();
@@ -240,25 +236,16 @@ void loop ()
   if ((millis() - last_clock_debounce_time) > debounce_delay) {
     if (clock_reading != clock_state) {
       clock_state = clock_reading;
-      
+
+      // Change clock state on button press
       if (clock_state == HIGH) {
-        led_state = !led_state;
-        if (clock_time_state == 0) {
-          clock_time_state == 1;
-        } 
-        else if (clock_time_state == 1) {
-          clock_time_state == 2;
-        }
-        else if (clock_time_state == 2) {
-          clock_time_state == 0;
-        }
+        clock_time_state = (clock_time_state + 1) % num_states;
       }
     }
   }
-  digitalWrite(LED_PIN, led_state);
   last_clock_state = clock_reading;
-  
-  // Set the hours or minutes
+
+  // Set the hours, minutes or seconds
   if (clock_time_state != 0) {
     int time_reading = digitalRead(SET_TIME_PIN);
     if (time_reading != last_time_state) {
@@ -267,29 +254,38 @@ void loop ()
     if ((millis() - last_time_debounce_time) > debounce_delay) {
       if (time_reading != time_state) {
         time_state = time_reading;
-        
+
         if (time_state == HIGH) {
-          // Get Time
-          time_t t = now();
-          current_second = second(t);
-          current_minute = minute(t);
-          current_hour = hour(t);
-          
           if (clock_time_state == 1) {
             // Update Hours
+            current_hour = (current_hour + 1) % 24;
           }
           else if (clock_time_state == 2) {
             // Update minutes
+            current_minute = (current_minute + 1) % 60;
+          }
+          else if (clock_time_state == 3) {
+            // Update seconds
+            current_second = (current_second + 1) % 60;
           }
         }
       }
     }
+    // Set time
+    setTime(current_hour, current_minute, current_second, 1, 1, 1970);
     last_time_state = time_reading;
   } 
   else {
-    // Update positions (ie run the clock)
-    positions.update();
+    // Get Time only if not in setting mode
+    time_t t = now();
+    current_milli = millis();
+    current_second = second(t);
+    current_minute = minute(t);
+    current_hour = hour(t);
   }
+
+  // Update positions
+  positions.update();
   // Draw the clock
   segments.draw();
 }
