@@ -64,8 +64,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(pixels, RING_PIN, NEO_GRB + NEO_KHZ8
 int num_hours = 12;
 
 //Set the top pixel for each ring
-int inner_top_led = 17 % inner_pixels;
-int outer_top_led = 42 % outer_pixels;
+int inner_top_led = 11 % inner_pixels;
+int outer_top_led = 36 % outer_pixels;
 
 // Off Color
 uint32_t off_color    = strip.Color (  0,  0,  0);
@@ -74,6 +74,7 @@ uint32_t off_color    = strip.Color (  0,  0,  0);
 int current_clock_color = 0;
 uint8_t current_brightness = 0;
 uint32_t milli_color, second_color, minute_color, hour_color;
+uint32_t point_color = strip.Color ( 64, 64, 64); // white
 
 // Keep the current time
 int current_second = 0;
@@ -153,13 +154,30 @@ void ClockSegments::draw()
 {
   clear();
 
+  // Clock Points
+  uint8_t px_00 = inner_offset + outer_top_led + 0;
+  if (px_00 > pixels) { px_00 = px_00 - outer_pixels;};
+  add_color (px_00, point_color);
+
+  uint8_t px_15 = inner_offset + outer_top_led + 15;
+  if (px_15 > pixels) { px_15 = px_15 - outer_pixels;};
+  add_color (px_15, point_color);
+
+  uint8_t px_30 = inner_offset + outer_top_led + 30;
+  if (px_30 > pixels) { px_30 = px_30 - outer_pixels;};
+  add_color (px_30, point_color);
+
+  uint8_t px_45 = inner_offset + outer_top_led + 45;
+  if (px_45 > pixels) { px_45 = px_45 - outer_pixels;};
+  add_color (px_45, point_color);
+
+  // Inner Ring
   add_color ((positions.px_hour+0)              % inner_pixels, hour_color);
   add_color ((positions.px_hour+1)              % inner_pixels, hour_color);
   
+  // Outer Ring
   add_color (inner_offset + positions.px_minute % outer_pixels, minute_color);
-
   add_color (inner_offset + positions.px_second % outer_pixels, second_color);
-
   add_color (inner_offset + positions.px_milli  % outer_pixels, milli_color);
 
   strip.show ();
