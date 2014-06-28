@@ -1,10 +1,12 @@
 // modified  https://github.com/zeroeth/time_loop
+// modified  https://github.com/sparkfun/DeadOn_RTC
 #include <Adafruit_NeoPixel.h>
-#include <Time.h>  
+#include <SPI.h>
 
 #define SET_CLOCK_PIN 2
 #define SET_TIME_PIN 3
 #define RING_PIN 6
+#define SLAVE_SELECT 10 // slave select rtc
 
 // Set Clock Button
 int clock_state;
@@ -294,6 +296,131 @@ void setColorBlue ()
   minute_color = strip.Color (  0, 34, 38); // light blue
 }
 
+/* Clock */
+int RTC_init(){
+    pinMode(SLAVE_SELECT,OUTPUT); // chip select
+    // start the SPI library:
+    SPI.begin();
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE1); // both mode 1 & 3 should work
+    //set control register
+    digitalWrite(SLAVE_SELECT, LOW);
+    SPI.transfer(0x8E);
+    SPI.transfer(0x60); //60= disable Osciallator and Battery SQ wave @1hz, temp compensation, Alarms disabled
+    digitalWrite(SLAVE_SELECT, HIGH);
+    delay(10);
+}
+
+//=====================================
+// Methods to set time
+// Write Address List:
+// 0x80 - Second
+// 0x81 - Minute
+// 0x82 - Hour
+// 0x83 - Weekday
+// 0x84 - Day
+// 0x85 - Month
+// 0x86 - Year
+//=====================================
+
+void setValue(int address, int val){
+    // Convert the values to hex
+    int b = val/10;   // 10's spot
+    int a = val-b*10; //  1's spot
+
+    // For hour
+    if (address == 0x82) {
+      if (b==2) {
+          b=B00000010;
+      }
+      else if (b==1) {
+          b=B00000001;
+      }
+    }
+
+    // Write the hex value back
+    int out_val = a+(b<<4);
+
+    digitalWrite(SLAVE_SELECT, LOW);
+    SPI.transfer(address);
+    SPI.transfer(out_val);
+    digitalWrite(SLAVE_SELECT, HIGH);
+}
+
+void setSecond(int val){
+    int address = 0x80;
+    setValue(address, val);
+}
+
+void setMinute(int val){
+    int address = 0x81;
+    setValue(address, val);
+}
+
+void setWeekday(int val){
+    int address = 0x82;
+    setValue(address, val);
+}
+
+void setHour(int val){
+    int address = 0x82;
+    setValue(address, val);
+}
+
+void setTime(int h, int mi, int s){
+    setHour(h);
+    setMinute(mi);
+    setSecond(s);
+}
+
+//=====================================
+// Methods to get time
+// Read Address List:
+// 0x00 - Second
+// 0x01 - Minute
+// 0x02 - Hour
+// 0x03 - Weekday
+// 0x04 - Day
+// 0x05 - Month
+// 0x06 - Year
+//=====================================
+
+unsigned int getValue(int address){
+  digitalWrite(SLAVE_SELECT, LOW);
+  SPI.transfer(address);
+  unsigned int n = SPI.transfer(0x00);
+  digitalWrite(SLAVE_SELECT, HIGH);
+  return n;
+}
+
+int getSecond(){
+  int address = 0x00;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b = (n & B01110000)>>4;
+  return a+b*10;
+}
+
+int getMinute(){
+  int address = 0x01;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b = (n & B01110000)>>4;
+  return a+b*10;
+}
+
+int getHour(){
+  int address = 0x02;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b=(n & B00110000)>>4; //24 hour mode
+  if(b==B00000010)
+      b=20;
+  else if(b==B00000001)
+      b=10;
+  return a + b;
+}
+
 /* APP */
 ClockPositions positions;
 ClockSegments  segments(strip, positions);
@@ -304,6 +431,11 @@ void setup ()
   pinMode(SET_CLOCK_PIN, INPUT);
   pinMode(SET_TIME_PIN, INPUT);
   
+  // Initialize the Clock
+  Serial.begin(9600);
+  RTC_init();
+  setTime(14,15,16);
+
   setColorBlue();
   strip.begin ();
   strip.show (); // Initialize all pixels to 'off'
@@ -371,15 +503,14 @@ void loop ()
       }
     }
     // Set time
-    setTime(current_hour, current_minute, current_second, 1, 1, 1970);
+    setTime(current_hour, current_minute, current_second);
     last_time_state = time_reading;
   } 
   else {
     // Get Time only if not in setting mode
-    time_t t = now();
-    current_second = second(t);
-    current_minute = minute(t);
-    current_hour = hour(t);
+    current_second = getSecond();
+    current_minute = getMinute();
+    current_hour = getHour();
   }
 
   // Update positions
