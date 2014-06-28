@@ -28,33 +28,45 @@ int RTC_init(){
 }
 //=====================================
 int SetTimeDate(int d, int mo, int y, int h, int mi, int s){
+    // Seconds, Minutes, Hour, Weekday, Day, Month, Year
     int TimeDate [7]={s,mi,h,0,d,mo,y};
+
+    // Walk through each item in the TimeDate array
     for(int i=0; i<=6;i++){
-        if(i==3)
+        // Skip Weekday
+        if(i==3) {
             i++;
-        int b= TimeDate[i]/10;
-        int a= TimeDate[i]-b*10;
+        }
+
+        // Convert the values to hex
+        int b = TimeDate[i]/10;   // 10's spot
+        int a = TimeDate[i]-b*10; //  1's spot
+
+        // For hour
         if(i==2){
             if (b==2)
                 b=B00000010;
             else if (b==1)
                 b=B00000001;
         }
+        // Write the hex value back
         TimeDate[i]= a+(b<<4);
 
         digitalWrite(cs, LOW);
         SPI.transfer(i+0x80);
         SPI.transfer(TimeDate[i]);
         digitalWrite(cs, HIGH);
-  }
+    }
 }
 //=====================================
 String ReadTimeDate(){
     String temp;
-    int TimeDate [7]; //second,minute,hour,null,day,month,year
+    int TimeDate [7]; //second,minute,hour,weekday,day,month,year
     for(int i=0; i<=6;i++){
-        if(i==3)
+        // Skip Weekday
+        if(i==3){
             i++;
+        }
         digitalWrite(cs, LOW);
         SPI.transfer(i+0x00);
         unsigned int n = SPI.transfer(0x00);
