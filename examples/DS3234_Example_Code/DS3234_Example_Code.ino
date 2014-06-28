@@ -5,11 +5,11 @@ void setup() {
     Serial.begin(9600);
     RTC_init();
     //day(1-31), month(1-12), year(0-99), hour(0-23), minute(0-59), second(0-59)
-    SetDateTime(11,12,13,14,15,16);
+    setDateTime(11,12,13,14,15,16);
 }
 
 void loop() {
-    Serial.println(ReadDateTime());
+    Serial.println(getDateTime());
     delay(1000);
 }
 
@@ -99,19 +99,19 @@ void setYear(int val){
     setValue(address, val);
 }
 
-void SetTime(int h, int mi, int s){
+void setTime(int h, int mi, int s){
     setHour(h);
     setMinute(mi);
     setSecond(s);
 }
 
-void SetDate(int d, int mo, int y){
+void setDate(int d, int mo, int y){
     setDay(d);
     setMonth(mo);
     setYear(y);
 }
 
-void SetDateTime(int d, int mo, int y, int h, int mi, int s){
+void setDateTime(int d, int mo, int y, int h, int mi, int s){
     setDay(d);
     setMonth(mo);
     setYear(y);
@@ -200,7 +200,7 @@ int getYear(){
   return a+b*10;
 }
 
-String ReadDateTime(){
+String getDateTime(){
     String temp;
 
     temp.concat(getDay());
