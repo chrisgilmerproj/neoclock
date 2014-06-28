@@ -12,6 +12,7 @@ void loop() {
   Serial.println(ReadTimeDate());
   delay(1000);
 }
+
 //=====================================
 int RTC_init(){
       pinMode(cs,OUTPUT); // chip select
@@ -26,8 +27,10 @@ int RTC_init(){
       digitalWrite(cs, HIGH);
       delay(10);
 }
+
 //=====================================
 // Methods to set time
+// Write Address List:
 // 0x80 - Second
 // 0x81 - Minute
 // 0x82 - Hour
@@ -118,6 +121,86 @@ void SetTimeDate(int d, int mo, int y, int h, int mi, int s){
 }
 
 //=====================================
+// Methods to get time
+// Read Address List:
+// 0x00 - Second
+// 0x01 - Minute
+// 0x02 - Hour
+// 0x03 - Weekday
+// 0x04 - Day
+// 0x05 - Month
+// 0x06 - Year
+//=====================================
+
+unsigned int getValue(int address){
+  digitalWrite(cs, LOW);
+  SPI.transfer(address);
+  unsigned int n = SPI.transfer(0x00);
+  digitalWrite(cs, HIGH);
+  return n;
+}
+
+int getSecond(){
+  int address = 0x00;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b = (n & B01110000)>>4;
+  return a+b*10;
+}
+
+int getMinute(){
+  int address = 0x01;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b = (n & B01110000)>>4;
+  return a+b*10;
+}
+
+int getHour(){
+  int address = 0x02;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b=(n & B00110000)>>4; //24 hour mode
+  if(b==B00000010)
+      b=20;
+  else if(b==B00000001)
+      b=10;
+  return a + b;
+}
+
+int getWeekday(){
+  int address = 0x03;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b = (n & B01110000)>>4;
+  return a+b*10;
+}
+
+int getDay(){
+  int address = 0x04;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b=(n & B00010000)>>4;
+  return a+b*10;
+}
+
+int getMonth(){
+  int address = 0x05;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b=(n & B00010000)>>4;
+  return a+b*10;
+}
+
+int getYear(){
+  int address = 0x06;
+  unsigned int n = getValue(address);
+  int a = n & B00001111;
+  int b=(n & B11110000)>>4;
+  return a+b*10;
+}
+
+
 String ReadTimeDate(){
     String temp;
     int TimeDate [7]; //second,minute,hour,weekday,day,month,year
