@@ -200,55 +200,19 @@ int getYear(){
   return a+b*10;
 }
 
-
 String ReadTimeDate(){
     String temp;
-    int TimeDate [7]; //second,minute,hour,weekday,day,month,year
-    for(int i=0; i<=6;i++){
-        // Skip Weekday
-        if(i==3){
-            i++;
-        }
-        digitalWrite(cs, LOW);
-        SPI.transfer(i+0x00);
-        unsigned int n = SPI.transfer(0x00);
-        digitalWrite(cs, HIGH);
-        int a=n & B00001111;
-        if(i==2){
-            int b=(n & B00110000)>>4; //24 hour mode
-            if(b==B00000010)
-                b=20;
-            else if(b==B00000001)
-                b=10;
-            TimeDate[i]=a+b;
-        }
-        else if(i==4){
-            int b=(n & B00110000)>>4;
-            TimeDate[i]=a+b*10;
-        }
-        else if(i==5){
-            int b=(n & B00010000)>>4;
-            TimeDate[i]=a+b*10;
-        }
-        else if(i==6){
-            int b=(n & B11110000)>>4;
-            TimeDate[i]=a+b*10;
-        }
-        else{
-            int b=(n & B01110000)>>4;
-            TimeDate[i]=a+b*10;
-            }
-    }
-    temp.concat(TimeDate[4]);
+
+    temp.concat(getDay());
     temp.concat("/") ;
-    temp.concat(TimeDate[5]);
+    temp.concat(getMonth());
     temp.concat("/") ;
-    temp.concat(TimeDate[6]);
+    temp.concat(getYear());
     temp.concat("     ") ;
-    temp.concat(TimeDate[2]);
+    temp.concat(getHour());
     temp.concat(":") ;
-    temp.concat(TimeDate[1]);
+    temp.concat(getMinute());
     temp.concat(":") ;
-    temp.concat(TimeDate[0]);
+    temp.concat(getSecond());
   return(temp);
 }
