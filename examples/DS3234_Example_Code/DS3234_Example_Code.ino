@@ -1,5 +1,5 @@
 #include <SPI.h>
-const int  cs=8; //chip select 
+const int  cs=10; //chip select
 
 void setup() {
   Serial.begin(9600);
