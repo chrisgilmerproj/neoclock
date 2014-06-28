@@ -1,31 +1,31 @@
 #include <SPI.h>
-const int  cs=10; //chip select
+const int  SLAVE_SELECT=10; //slave select
 
 void setup() {
-  Serial.begin(9600);
-  RTC_init();
-  //day(1-31), month(1-12), year(0-99), hour(0-23), minute(0-59), second(0-59)
-  SetTimeDate(11,12,13,14,15,16);
+    Serial.begin(9600);
+    RTC_init();
+    //day(1-31), month(1-12), year(0-99), hour(0-23), minute(0-59), second(0-59)
+    SetTimeDate(11,12,13,14,15,16);
 }
 
 void loop() {
-  Serial.println(ReadTimeDate());
-  delay(1000);
+    Serial.println(ReadTimeDate());
+    delay(1000);
 }
 
 //=====================================
 int RTC_init(){
-      pinMode(cs,OUTPUT); // chip select
-      // start the SPI library:
-      SPI.begin();
-      SPI.setBitOrder(MSBFIRST);
-      SPI.setDataMode(SPI_MODE1); // both mode 1 & 3 should work
-      //set control register
-      digitalWrite(cs, LOW);
-      SPI.transfer(0x8E);
-      SPI.transfer(0x60); //60= disable Osciallator and Battery SQ wave @1hz, temp compensation, Alarms disabled
-      digitalWrite(cs, HIGH);
-      delay(10);
+    pinMode(SLAVE_SELECT,OUTPUT); // chip select
+    // start the SPI library:
+    SPI.begin();
+    SPI.setBitOrder(MSBFIRST);
+    SPI.setDataMode(SPI_MODE1); // both mode 1 & 3 should work
+    //set control register
+    digitalWrite(SLAVE_SELECT, LOW);
+    SPI.transfer(0x8E);
+    SPI.transfer(0x60); //60= disable Osciallator and Battery SQ wave @1hz, temp compensation, Alarms disabled
+    digitalWrite(SLAVE_SELECT, HIGH);
+    delay(10);
 }
 
 //=====================================
@@ -58,10 +58,10 @@ void setValue(int address, int val){
     // Write the hex value back
     int out_val = a+(b<<4);
 
-    digitalWrite(cs, LOW);
+    digitalWrite(SLAVE_SELECT, LOW);
     SPI.transfer(address);
     SPI.transfer(out_val);
-    digitalWrite(cs, HIGH);
+    digitalWrite(SLAVE_SELECT, HIGH);
 }
 
 void setSecond(int val){
@@ -133,10 +133,10 @@ void SetTimeDate(int d, int mo, int y, int h, int mi, int s){
 //=====================================
 
 unsigned int getValue(int address){
-  digitalWrite(cs, LOW);
+  digitalWrite(SLAVE_SELECT, LOW);
   SPI.transfer(address);
   unsigned int n = SPI.transfer(0x00);
-  digitalWrite(cs, HIGH);
+  digitalWrite(SLAVE_SELECT, HIGH);
   return n;
 }
 
