@@ -79,9 +79,9 @@ uint32_t milli_color, second_color, minute_color, hour_color;
 uint32_t point_color = strip.Color ( 64, 64, 64); // white
 
 // Keep the current time
-int current_second = 0;
-int current_minute = 0;
-int current_hour = 0;
+int current_second;
+int current_minute;
+int current_hour;
 
 /* CLOCK */
 class ClockPositions
@@ -434,7 +434,6 @@ void setup ()
   // Initialize the Clock
   Serial.begin(9600);
   RTC_init();
-  setTime(14,15,16);
 
   setColorBlue();
   strip.begin ();
