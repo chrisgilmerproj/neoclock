@@ -26,7 +26,7 @@ Animations
 
 Every fifteen minutes there is an animation sequence.  The top of the hour
 runs a rainbow cycle.  The other three animations cycle one color through
-all the pixels in the clock.
+all the pixels in the clock (Red, Green, Blue).
 
 Laser Cut Files
 ---
