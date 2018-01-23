@@ -1,7 +1,12 @@
 NeoClock
 ========
 
-Neopixel clock based on neopixel rings from Adafruit
+Neopixel clock based on neopixel rings from Adafruit.
+
+![NeoClock](./pictures/neoclock_color_scheme_1.jpg)
+
+Code
+---
 
 Relies on code from Adafruit and Zeroeth, see
 https://github.com/zeroeth/time_loop

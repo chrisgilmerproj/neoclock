@@ -5,3 +5,5 @@ These files were used to laser cut the clock body.  Here is a preview of the fil
 ![NeoClock Body](./neoclock_laser_cut.png)
 
 **NOTE:** Only the `*.eps` files were sent to Ponoko.
+
+All files were created using [Inkscape](https://inkscape.org/en/).
