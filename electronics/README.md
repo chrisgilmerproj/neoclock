@@ -1,6 +1,10 @@
 # Electronics
 
-This is a (mostly) complete list of parts used to make the clock:
+This is a (mostly) complete list of parts used to make the electronics for the clock:
+
+![NeoClock](./NeoClock_bb.png)
+
+You can also open the [NeoClock Fritzing File](./NeoClock.fzz) to see how it was set up.
 
 ## SparkFun Parts
 
@@ -11,6 +15,10 @@ This is a (mostly) complete list of parts used to make the clock:
 - Resistors Avalable in [Resistor Kit 1/4W 500 Total](https://www.sparkfun.com/products/10969) (COM-10960)
   - 1x 470 Ohm 1/4W Resistor (yellow, violet, brown, silver)
   - 2x 2.2 Ohm 1/4W Resistor (doesn't have to be exact here) (red, red, brown, silver, gold)
+
+Also needed for programming the Arduino:
+
+- 1x [FTDI Cable 5V](https://www.sparkfun.com/products/9718) (DEV-09718)
 
 Also some wire:
 
