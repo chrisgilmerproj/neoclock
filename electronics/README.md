@@ -32,7 +32,7 @@ Also some wire:
 
 ## Radio Shack Parts
 
-- 12V 1.5A Power Supply
+- 12V 1.5A Power Supply (Amperage is important here! Probably needs a min of 1A)
 - 1x [1000uF Electrolytic Capacitor](https://www.radioshack.com/products/radioshack-1000uf-35v-20-axial-lead-electrolytic-capacitor) (Axial Leads, 35WVDC max) (272-1019)
 - 2x [SPST Momentary Pushbutton Switch](https://www.radioshack.com/products/spst-pushbtn-swch) Contacts (N.O.) rated 3A at 125VAC or 1.5A at 250VAC (275-0644)
 - 1x [Size K Coaxial DC Power Jack with Switch](https://www.radioshack.com/products/radioshack-size-k-coaxial-dc-power-jack-w-switch) (N.C. break circuit, 5.0mm OD, 2.1mm ID, with mounting hardware) (274-1565)
