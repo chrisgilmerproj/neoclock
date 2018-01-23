@@ -3,7 +3,7 @@ NeoClock
 
 Neopixel clock based on neopixel rings from Adafruit.
 
-![NeoClock](./pictures/neoclock_color_scheme_1.jpg)
+![NeoClock](./pictures/neoclock.jpg)
 
 Code
 ---
