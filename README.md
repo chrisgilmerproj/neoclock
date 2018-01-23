@@ -27,3 +27,18 @@ Animations
 Every fifteen minutes there is an animation sequence.  The top of the hour
 runs a rainbow cycle.  The other three animations cycle one color through
 all the pixels in the clock.
+
+Laser Cut Files
+---
+
+The files used to laser cut the body of the clock are found in the `ponoko`
+directory.  The final files sent to Ponoko were:
+
+- `neoclock_ponoko_wood_final.eps`
+- `neoclock_ponoko_acrylic_final.eps`
+
+The original SVG files are provided for convenience.
+
+The wood used was a `Veneer MDF Cherry 5.7mm` at 384mm square.
+
+The acrylic used was an `Acrylic Opal 5.6mm` at 181mm square.
