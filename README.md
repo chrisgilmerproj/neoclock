@@ -42,3 +42,8 @@ The original SVG files are provided for convenience.
 The wood used was a `Veneer MDF Cherry 5.7mm` at 384mm square.
 
 The acrylic used was an `Acrylic Opal 5.6mm` at 181mm square.
+
+Electronics
+---
+
+The list of parts can be found in the `electronics` directory.
