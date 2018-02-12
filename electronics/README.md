@@ -14,7 +14,8 @@ You can also open the [NeoClock Fritzing File](./NeoClock.fzz) to see how it was
 - 1x [L7805 Voltage Regulator 5V 1.5A-Max](https://www.sparkfun.com/products/107) (COM-00107)
 - Resistors Avalable in [Resistor Kit 1/4W 500 Total](https://www.sparkfun.com/products/10969) (COM-10960)
   - 1x 470 Ohm 1/4W Resistor (yellow, violet, brown, silver)
-  - 2x 2.2 Ohm 1/4W Resistor (doesn't have to be exact here) (red, red, brown, silver, gold)
+  - 2x 1 kOhm 1/4W Resistor (brown, black, red, gold) (doesn't have to be exact here, just small and not smaller than)
+    - I used 2.21 Ohm 1/4W Resistor (red, red, brown, silver, gold) because I had it, but it is too small
 
 Also needed for programming the Arduino:
 
